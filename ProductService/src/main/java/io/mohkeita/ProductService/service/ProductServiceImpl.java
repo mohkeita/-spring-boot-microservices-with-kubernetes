@@ -1,6 +1,7 @@
 package io.mohkeita.ProductService.service;
 
 import io.mohkeita.ProductService.entity.Product;
+import io.mohkeita.ProductService.exception.ProductServiceCustomException;
 import io.mohkeita.ProductService.model.ProductRequest;
 import io.mohkeita.ProductService.model.ProductResponse;
 import io.mohkeita.ProductService.repository.ProductRepository;
@@ -34,7 +35,7 @@ public class ProductServiceImpl implements ProductService {
         log.info("Get the product for productId: {} ", productId);
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product with given id not found"));
+                .orElseThrow(() -> new ProductServiceCustomException("Product with given id not found", "PRODUCT_NOT_FOUND"));
 
         ProductResponse productResponse = new ProductResponse();
 
