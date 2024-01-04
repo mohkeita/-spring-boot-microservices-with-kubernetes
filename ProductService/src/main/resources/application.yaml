@@ -17,6 +17,15 @@ spring:
   config:
     import: configserver:http://localhost:9296
 
+management:
+  tracing:
+    sampling:
+      probability: 1
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+
 #eureka:
 #  instance:
 #    prefer-ip-address: true

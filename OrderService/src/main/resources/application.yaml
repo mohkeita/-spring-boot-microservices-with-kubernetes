@@ -17,6 +17,12 @@ spring:
   config:
     import: configserver:http://localhost:9296
 
+
+management:
+  tracing:
+    sampling:
+      probability: 1
+
 #eureka:
 #  instance:
 #    prefer-ip-address: true
@@ -25,3 +31,6 @@ spring:
 #    register-with-eureka: true
 #    service-url:
 #      defaultZone: ${EUREKA_SERVER_ADDRESS:http://localhost:8761/eureka}
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
