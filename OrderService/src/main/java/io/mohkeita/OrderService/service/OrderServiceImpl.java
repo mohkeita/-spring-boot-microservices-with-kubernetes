@@ -5,12 +5,14 @@ import io.mohkeita.OrderService.exception.CustomException;
 import io.mohkeita.OrderService.external.client.PaymentService;
 import io.mohkeita.OrderService.external.client.ProductService;
 import io.mohkeita.OrderService.external.request.PaymentRequest;
+import io.mohkeita.OrderService.external.response.ProductResponse;
 import io.mohkeita.OrderService.model.OrderRequest;
 import io.mohkeita.OrderService.model.OrderResponse;
 import io.mohkeita.OrderService.repository.OrderRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 
@@ -23,6 +25,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private PaymentService paymentService;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Autowired
     private ProductService productService;
@@ -76,11 +81,26 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(()-> new CustomException("Order not found for the order id" + orderId,
                         "NOT_FOUND", 404));
 
+        log.info("Invoking Product service to fetch the product for id: {}", order.getProductId());
+
+        ProductResponse productResponse =
+                restTemplate.getForObject(
+                        "http://PRODUCT-SERVICE/product/" + order.getProductId(),
+                        ProductResponse.class
+                );
+
+        OrderResponse.ProductDetails productDetails = OrderResponse.ProductDetails
+                .builder()
+                .productName(productResponse.getProductName())
+                .productId(productResponse.getProductId())
+                .build();
+
         return OrderResponse.builder()
                 .orderId(order.getId())
                 .orderStatus(order.getOrderStatus())
                 .amount(order.getAmount())
                 .orderDate(order.getOrderDate())
+                .productDetails(productDetails)
                 .build();
     }
 }
