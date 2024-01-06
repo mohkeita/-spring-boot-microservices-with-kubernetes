@@ -5,6 +5,7 @@ import io.mohkeita.OrderService.exception.CustomException;
 import io.mohkeita.OrderService.external.client.PaymentService;
 import io.mohkeita.OrderService.external.client.ProductService;
 import io.mohkeita.OrderService.external.request.PaymentRequest;
+import io.mohkeita.OrderService.external.response.PaymentResponse;
 import io.mohkeita.OrderService.external.response.ProductResponse;
 import io.mohkeita.OrderService.model.OrderRequest;
 import io.mohkeita.OrderService.model.OrderResponse;
@@ -85,9 +86,16 @@ public class OrderServiceImpl implements OrderService {
 
         ProductResponse productResponse =
                 restTemplate.getForObject(
-                        "http://PRODUCT-SERVICE/product/" + order.getProductId(),
+                        "http://PRODUCT-SERVICE/products/" + order.getProductId(),
                         ProductResponse.class
                 );
+
+        log.info("Getting payment information from the payment service");
+
+        PaymentResponse paymentResponse = restTemplate.getForObject(
+                "http://PAYMENT-SERVICE/payments/orders/"+order.getId(),
+                PaymentResponse.class
+        );
 
         OrderResponse.ProductDetails productDetails = OrderResponse.ProductDetails
                 .builder()
@@ -95,12 +103,21 @@ public class OrderServiceImpl implements OrderService {
                 .productId(productResponse.getProductId())
                 .build();
 
+        OrderResponse.PaymentDetails paymentDetails =
+                OrderResponse.PaymentDetails.builder()
+                        .paymentId(paymentResponse.getPaymentId())
+                        .paymentStatus(paymentResponse.getStatus())
+                        .paymentDate(paymentResponse.getPaymentDate())
+                        .paymentMode(paymentResponse.getPaymentMode())
+                        .build();
+
         return OrderResponse.builder()
                 .orderId(order.getId())
                 .orderStatus(order.getOrderStatus())
                 .amount(order.getAmount())
                 .orderDate(order.getOrderDate())
                 .productDetails(productDetails)
+                .paymentDetails(paymentDetails)
                 .build();
     }
 }
