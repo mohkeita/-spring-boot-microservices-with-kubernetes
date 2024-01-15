@@ -6,8 +6,10 @@ import io.mohkeita.OrderService.external.client.PaymentService;
 import io.mohkeita.OrderService.external.client.ProductService;
 import io.mohkeita.OrderService.external.response.PaymentResponse;
 import io.mohkeita.OrderService.external.response.ProductResponse;
+import io.mohkeita.OrderService.model.OrderRequest;
 import io.mohkeita.OrderService.model.OrderResponse;
 import io.mohkeita.OrderService.model.PaymentMode;
+import io.mohkeita.OrderService.external.request.PaymentRequest;
 import io.mohkeita.OrderService.repository.OrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
@@ -96,6 +100,31 @@ public class OrderServiceImplTest {
                 .findById(anyLong());
     }
 
+    @DisplayName("Place Order - Success Scenario")
+    @Test
+    void test_When_Place_Order_Success() {
+        Order order = getMockOrder();
+        OrderRequest orderRequest = getMockOrderRequest();
+
+        when(orderRepository.save(any(Order.class)))
+                .thenReturn(order);
+        when(productService.reduceQuantity(anyLong(),anyLong()))
+                .thenReturn(new ResponseEntity<Void>(HttpStatus.OK));
+        when(paymentService.doPayment(any(PaymentRequest.class)))
+                .thenReturn(new ResponseEntity<Long>(1L,HttpStatus.OK));
+
+        long orderId = orderService.placeOrder(orderRequest);
+
+        verify(orderRepository, times(2))
+                .save(any());
+        verify(productService, times(1))
+                .reduceQuantity(anyLong(),anyLong());
+        verify(paymentService, times(1))
+                .doPayment(any(PaymentRequest.class));
+
+        assertEquals(order.getId(), orderId);
+    }
+
     private PaymentResponse getMockPaymentResponse() {
         return PaymentResponse.builder()
                 .paymentId(1)
@@ -104,6 +133,15 @@ public class OrderServiceImplTest {
                 .amount(200)
                 .orderId(1)
                 .status("ACCEPTED")
+                .build();
+    }
+
+    private OrderRequest getMockOrderRequest() {
+        return OrderRequest.builder()
+                .productId(1)
+                .quantity(10)
+                .paymentMode(PaymentMode.CASH)
+                .totalAmount(100)
                 .build();
     }
 
