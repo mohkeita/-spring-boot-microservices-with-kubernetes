@@ -1,6 +1,7 @@
 package io.mohkeita.OrderService.service;
 
 import io.mohkeita.OrderService.entity.Order;
+import io.mohkeita.OrderService.exception.CustomException;
 import io.mohkeita.OrderService.external.client.PaymentService;
 import io.mohkeita.OrderService.external.client.ProductService;
 import io.mohkeita.OrderService.external.response.PaymentResponse;
@@ -76,6 +77,23 @@ public class OrderServiceImplTest {
         assertNotNull(orderResponse);
         assertEquals(order.getId(), orderResponse.getOrderId());
 
+    }
+
+    @DisplayName("Get Orders - Failure Scenario")
+    @Test
+    void test_When_Get_Order_NOT_FOUND_then_Not_Found() {
+
+        when(orderRepository.findById(anyLong()))
+                .thenReturn(Optional.empty());
+
+        CustomException exception =
+                assertThrows(CustomException.class,
+                        () -> orderService.getOrderDetails(1));
+        assertEquals("NOT_FOUND", exception.getErrorCode());
+        assertEquals(404, exception.getStatus());
+
+        verify(orderRepository, times(1))
+                .findById(anyLong());
     }
 
     private PaymentResponse getMockPaymentResponse() {
