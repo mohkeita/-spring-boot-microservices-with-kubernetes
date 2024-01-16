@@ -8,18 +8,16 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 
 @Configuration
 @EnableWebFluxSecurity
-public class OktaOauth2WebSecurity {
+public class OktaOAuth2WebSecurity {
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
-        http
-                .authorizeExchange()
+        http.authorizeExchange()
                 .anyExchange().authenticated()
-                .and()
-                .oauth2Login()
-                .and()
+                .and().oauth2Login().and()
                 .oauth2ResourceServer()
                 .jwt();
         return http.build();
     }
+
 }

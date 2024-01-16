@@ -8,6 +8,7 @@ import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuit
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication
@@ -17,10 +18,19 @@ public class CloudGatewayApplication {
 		SpringApplication.run(CloudGatewayApplication.class, args);
 	}
 
-	@Bean
+	/*@Bean
 	KeyResolver userKeySolver() {
 		return exchange -> Mono.just("userKey");
 
+	}
+
+	 */
+
+	@Bean
+	KeyResolver authUserKeyResolver() {
+		return exchange -> ReactiveSecurityContextHolder.getContext()
+				.map(ctx -> ctx.getAuthentication()
+						.getCredentials().toString());
 	}
 	@Bean
 	public Customizer<Resilience4JCircuitBreakerFactory> defaultCustomizer() {
