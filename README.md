@@ -1,2 +1,2 @@
-# -spring-boot-microservices-with-kubernates
-Spring boot and Microservice with Kubernates
+# -spring-boot-microservices-with-Kubernetes
+Spring boot and Microservice with Kubernetes
