@@ -9,6 +9,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.mohkeita.OrderService.OrderServiceConfig;
 import io.mohkeita.OrderService.entity.Order;
 import io.mohkeita.OrderService.model.OrderRequest;
+import io.mohkeita.OrderService.model.OrderResponse;
 import io.mohkeita.OrderService.model.PaymentMode;
 import io.mohkeita.OrderService.repository.OrderRepository;
 import io.mohkeita.OrderService.service.OrderService;
@@ -170,5 +171,54 @@ public class OrderControllerTest {
                         .content(objectMapper.writeValueAsString(orderRequest))
                 ).andExpect(status().isForbidden())
                 .andReturn();
+    }
+
+    @Test
+    public void test_WhenGetOrder_Success() throws Exception {
+        MvcResult mvcResult
+                = mockMvc.perform(MockMvcRequestBuilders.get("/order/1")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("Admin")))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String actualResponse = mvcResult.getResponse().getContentAsString();
+        Order order = orderRepository.findById(1L).get();
+        String expectedResponse = getOrderResponse(order);
+
+        assertEquals(expectedResponse,actualResponse);
+    }
+
+    private String getOrderResponse(Order order) throws IOException {
+        OrderResponse.PaymentDetails paymentDetails
+                = objectMapper.readValue(
+                copyToString(
+                        OrderControllerTest.class.getClassLoader()
+                                .getResourceAsStream("mock/GetPayment.json"
+                                ),
+                        defaultCharset()
+                ), OrderResponse.PaymentDetails.class
+        );
+        paymentDetails.setPaymentStatus("SUCCESS");
+
+        OrderResponse.ProductDetails productDetails
+                = objectMapper.readValue(
+                copyToString(
+                        OrderControllerTest.class.getClassLoader()
+                                .getResourceAsStream("mock/GetProduct.json"),
+                        defaultCharset()
+                ), OrderResponse.ProductDetails.class
+        );
+
+        OrderResponse orderResponse
+                = OrderResponse.builder()
+                .paymentDetails(paymentDetails)
+                .productDetails(productDetails)
+                .orderStatus(order.getOrderStatus())
+                .orderDate(order.getOrderDate())
+                .amount(order.getAmount())
+                .orderId(order.getId())
+                .build();
+        return objectMapper.writeValueAsString(orderResponse);
     }
 }
